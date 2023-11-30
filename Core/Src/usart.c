@@ -90,7 +90,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USART1_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 	
@@ -147,14 +147,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		Uart1RxBuff[Uart1RxCnt++] = Uart1RxData;   //接收数据转存
 	
-		if((Uart1RxBuff[Uart1RxCnt-1] == 0x0A)&&(Uart1RxBuff[Uart1RxCnt-2] == 0x0D)) //判断结束位
+		if((Uart1RxBuff[Uart1RxCnt-1] == 0x0A)&&(Uart1RxBuff[Uart1RxCnt-2] == 0x0D)) //判断结束�?
 		{
-			HAL_UART_Transmit(&huart1, (uint8_t *)&Uart1RxBuff, Uart1RxCnt,0xFFFF); //将收到的信息发送出去
+			HAL_UART_Transmit(&huart1, (uint8_t *)&Uart1RxBuff, Uart1RxCnt,0xFFFF); //将收到的信息发�?�出�?
 			Uart1RxCnt = 0;
 			memset(Uart1RxBuff,0x00,sizeof(Uart1RxBuff)); //清空数组
 		}
 	}
 	
-	HAL_UART_Receive_IT(&huart1, (uint8_t *)&Uart1RxData, 1);   //再开启接收中断
+	HAL_UART_Receive_IT(&huart1, (uint8_t *)&Uart1RxData, 1);   //再开启接收中�?
 }
 /* USER CODE END 1 */

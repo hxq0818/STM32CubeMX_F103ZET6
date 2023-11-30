@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -64,7 +65,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t String[] = "Hello-HAL_UART_Transmit!!!\r\n";
+	
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -86,8 +87,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 	
+	User_Key_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -97,10 +100,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);   //对LED2管脚的电平进行翻转.也可以用HAL_GPIO_WritePin函数进行设置高低电平
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);		//对LED2管脚的电平进行翻转.
-		HAL_UART_Transmit(&huart1,&String[0],sizeof(String)-1,0xffff);
-		printf("HELLO-printf!!!\r\n");
+		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);   //对LED2管脚的电平进行翻�?.也可以用HAL_GPIO_WritePin函数进行设置高低电平
 		HAL_Delay(1000);
   }
   /* USER CODE END 3 */
@@ -148,6 +148,74 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM7 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+	static uint16_t key_release_time=0;
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM7) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+	
+	if (htim->Instance == TIM6) {
+		if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==0 && user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] == USER_DRV_KEY_DOWM)
+		{
+				time++;
+		}
+		else if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==1 && user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] == USER_DRV_KEY_DOWM)
+		{
+			user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] = USER_DRV_KEY_UP;
+			if(time > 50) /*! 按下时间大于50ms视作为有效按�? 同时两次按下间隔大于50ms视作有效双击*/ 
+			{
+					user_key.keyPressDowmTime[user_key.KeyPressDowmCount] = time;
+					user_key.KeyPressReleaseTime[user_key.KeyPressDowmCount] = key_release_time;
+					user_key.KeyPressDowmCount++;
+			}
+			key_release_time = 0;
+		}
+		else if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==1 && user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] == USER_DRV_KEY_UP)
+		{
+			if(user_key.KeyPressDowmCount==2)
+			{
+				if(user_key.KeyPressReleaseTime[1] > 50 && user_key.KeyPressReleaseTime[1] < 300)
+				{
+					printf("key double click!!!\r\n");
+				}
+				user_key.KeyPressDowmCount = 0;
+				HAL_TIM_Base_Stop_IT(&htim6);
+			}
+			if(key_release_time > 300)
+			{
+				if(user_key.keyPressDowmTime[0] > 50 && user_key.keyPressDowmTime[0] < 1500)
+				{
+					printf("key short press!!!\r\n");
+				}
+				else if(user_key.keyPressDowmTime[0] >= 1500)
+				{
+					printf("key long press!!!\r\n");
+				}
+				user_key.KeyPressDowmCount = 0;
+				HAL_TIM_Base_Stop_IT(&htim6);
+			}
+			key_release_time++;//
+			time = 0;
+			__HAL_GPIO_EXTI_CLEAR_IT(KEY0_Pin);
+			
+		}
+  }
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

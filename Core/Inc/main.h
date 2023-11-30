@@ -57,8 +57,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define KEY2_Pin GPIO_PIN_2
+#define KEY2_GPIO_Port GPIOE
+#define KEY2_EXTI_IRQn EXTI2_IRQn
+#define KEY1_Pin GPIO_PIN_3
+#define KEY1_GPIO_Port GPIOE
+#define KEY1_EXTI_IRQn EXTI3_IRQn
+#define KEY0_Pin GPIO_PIN_4
+#define KEY0_GPIO_Port GPIOE
+#define KEY0_EXTI_IRQn EXTI4_IRQn
 #define LED2_Pin GPIO_PIN_5
 #define LED2_GPIO_Port GPIOE
+#define KEY_UP_Pin GPIO_PIN_0
+#define KEY_UP_GPIO_Port GPIOA
+#define KEY_UP_EXTI_IRQn EXTI0_IRQn
 #define LED1_Pin GPIO_PIN_5
 #define LED1_GPIO_Port GPIOB
 
