@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
+#include "rtc.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -49,6 +51,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -88,11 +91,20 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_TIM6_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 	
 	User_Key_Init();
+
   /* USER CODE END 2 */
 
+  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -100,8 +112,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);   //对LED2管脚的电平进行翻�?.也可以用HAL_GPIO_WritePin函数进行设置高低电平
-		HAL_Delay(1000);
+//		HAL_RTC_GetTime(&hrtc,&RtcTime,RTC_FORMAT_BIN);
+//		HAL_RTC_GetDate(&hrtc,&RtcDate,RTC_FORMAT_BIN);
+//		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);   //对LED2管脚的电平进行翻�?	也可以用HAL_GPIO_WritePin函数进行设置高低电平
+//		printf("%4d-%d-%d %d:%d:%d\r\n",RtcDate.Year+2000,RtcDate.Month,RtcDate.Date,RtcTime.Hours,RtcTime.Minutes,RtcTime.Seconds);
+//		HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -114,14 +129,16 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
@@ -140,6 +157,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
@@ -176,7 +199,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		else if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==1 && user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] == USER_DRV_KEY_DOWM)
 		{
 			user_key.keyPressStatus[USER_DRV_KEY0_LEVEL] = USER_DRV_KEY_UP;
-			if(time > 50) /*! 按下时间大于50ms视作为有效按�? 同时两次按下间隔大于50ms视作有效双击*/ 
+			if(time > 50) /*! 按下时间大于50ms视作为有效按�?	同时两次按下间隔大于50ms视作有效双击*/ 
 			{
 					user_key.keyPressDowmTime[user_key.KeyPressDowmCount] = time;
 					user_key.KeyPressReleaseTime[user_key.KeyPressDowmCount] = key_release_time;

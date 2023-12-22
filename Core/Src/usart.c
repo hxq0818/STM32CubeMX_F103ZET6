@@ -21,8 +21,7 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-#include "stdio.h"
-#include "string.h"
+
 
 uint8_t Uart1RxData;			//接收中断缓冲
 uint8_t Uart1RxBuff[256];		//接收缓冲
